@@ -1,0 +1,7 @@
+---
+- ansible.builtin.import_playbook: cloud.yml    #Import all the Files used to complete the Task
+- ansible.builtin.import_playbook: nodes.yml
+- ansible.builtin.import_playbook: common.yml
+- ansible.builtin.import_playbook: master.yml
+- ansible.builtin.import_playbook: worker.yml
+- ansible.builtin.import_playbook: ingress.yml

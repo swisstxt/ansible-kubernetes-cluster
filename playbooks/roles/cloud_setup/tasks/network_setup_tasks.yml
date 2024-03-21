@@ -1,0 +1,55 @@
+- name: Upload public Key                                                 # Task to upload the SSH key to later connect to the nodes
+  ngine_io.cloudstack.cs_sshkeypair:
+    api_secret: "{{ api_secret }}"                                        # Api key secret and url so that ansible can make changes on CloudStack
+    api_url: "{{ api_host }}"
+    api_key: "{{ api_key }}"
+    name: jumphostkey                                                     # Name of the key on CloudStack
+    public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"               # Where the key is located on the host
+
+- name: Create Kubernetes Network                                         # Task to create the Network
+  ngine_io.cloudstack.cs_network:
+    api_secret: "{{ api_secret }}"                                        # Api key secret and url so that ansible can make changes on CloudStack
+    api_url: "{{ api_host }}"
+    api_key: "{{ api_key }}"
+    name: "{{ network }}"                                                 # Name of the Network on CloudStack
+    zone: "{{ zone }}"                                                    # Name of the zone, in this case ZUERICH_IX for interxion 
+    network_offering: DefaultIsolatedNetworkOfferingWithSourceNatService  # Specifies the Network offering, in this case, with source nat
+    state: present 
+
+- name: Get Public NAT IP for Network                                     # Task to assign a public IP to the network
+  ngine_io.cloudstack.cs_ip_address:
+    api_secret: "{{ api_secret }}"                                        # Api key secret and url so that ansible can make changes on CloudStack
+    api_url: "{{ api_host }}"
+    api_key: "{{ api_key }}"
+    api_http_method: post                                                 # Specifies the API method in this case post
+    zone: "{{ zone }}"                                                    # Name of the zone, in this case ZUERICH_IX for interxion 
+    network: "{{ network }}"                                              # Name of the Network on CloudStack
+    tags:                                                                 # Tags to identify that this IP is already there if the playbook runs twice
+      - key: natip
+        value: ce8a9f8c-422f-4588-81a7-3c6db074bbc3
+  register: publicip                                                      # Register the new created public IP
+
+- name: Alter Vars.yml File                                               # Task to write the public ip as variable
+  ansible.builtin.lineinfile: 
+    path: "{{ vars_file_path }}"                                          # Path to vars.yml
+    regexp: "^natip:"                                                     # Where to put the new variable
+    line: 'natip: "{{ publicip.ip_address }}"'                            # Content for new variable
+  register: alter
+  when:                                                                   # Only do this task if the previous has changed
+    - publicip is not failed
+    - publicip is defined
+
+- name: Pause 10s to Save Variable                                        # Give it some time to save the variable properly
+  ansible.builtin.pause:
+    seconds: 10
+  when: alter is not skipped                                              # Only do it when the previous task did something
+
+- name: Define Rules for Egress                                           # Task do define Firewall Rules
+  ngine_io.cloudstack.cs_firewall:
+    api_secret: "{{ api_secret }}"                                        # Api key secret and url so that ansible can make changes on CloudStack
+    api_url: "{{ api_host }}"
+    api_key: "{{ api_key }}"
+    network: "{{ network }}"                                              # Name of the Network on CloudStack
+    zone: "{{ zone }}"                                                    # Name of the zone, in this case ZUERICH_IX for interxion 
+    type: egress
+    protocol: all                                                         # All for Egress, Ingress will be limited

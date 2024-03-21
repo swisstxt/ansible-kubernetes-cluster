@@ -1,0 +1,11 @@
+---
+- name: Basic Infrastructure Setup on CloudStack  # Name of the Task
+  hosts: localhost                                # On which hosts the playbook should run
+  tags: cloud                                     # Tags to be used to play only this part of the project
+  gather_facts: no                                # Do not gather facts for the localhost
+  roles:                                          # The roles which needs to bee included
+    - cloud_setup
+  vars_files:                                     # The vars Files it should use
+    - hosts/group_vars/all/secret.yml
+    - hosts/group_vars/all/version.yml
+    - hosts/group_vars/all/vars.yml

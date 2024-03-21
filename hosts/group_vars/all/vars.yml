@@ -1,0 +1,4 @@
+---
+network: "vnet-kubcluster"    # Network name on CloudStack
+zone: "ZUERICH_IX"            # Zone name in which the network and nodes are created
+natip:

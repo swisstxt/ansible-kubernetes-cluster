@@ -1,2 +1,4 @@
 ---
 # tasks file for roles/cloud_setup
+- name: Network Setup on CloudStack       # Taske description to include all the tasks from the given File
+  include_tasks: network_setup_tasks.yml
