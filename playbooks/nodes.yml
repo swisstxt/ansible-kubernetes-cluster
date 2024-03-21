@@ -1,0 +1,7 @@
+---
+- name: Set up Nodes      # Name of the task
+  hosts: nodes            # Play role on nodes 
+  tags: nodes             # Tags to start the project here
+  gather_facts: no        # Do not gather facts because the nodes aren't set up till now
+  roles:                  # Roles to play for this task to finish
+  - create_nodes

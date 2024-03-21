@@ -1,4 +1,10 @@
 ---
 network: "vnet-kubcluster"    # Network name on CloudStack
 zone: "ZUERICH_IX"            # Zone name in which the network and nodes are created
-natip:
+template: "AlmaLinux 9"       # Template for the Nodes
+offering: "2cpu_4gb"          # Service offering on CloudStack
+cidrs: ""                     # SRG and SWISS TXT public ip ranges
+vars_file_path: "{{ playbook_dir }}/../hosts/group_vars/all/vars.yml"
+master_port: 2222             # Outbound SSH ports
+worker1_port: 2223
+worker2_port: 2224

@@ -1,0 +1,63 @@
+---
+- name: Run All Tasks from localhost for All the Nodes    # Block to run the tasks from localhost but loop every task for every node
+  delegate_to: localhost
+  block:
+  - name: Create Nodes on CloudStack                      # Task to create the Nodes
+    ngine_io.cloudstack.cs_instance:
+      api_secret: "{{ api_secret }}"                      # Api key secret and url so that ansible can make changes on CloudStack
+      api_url: "{{ api_host }}"
+      api_key: "{{ api_key }}"
+      template: "{{ template }}"                          # Use variables for template name servide_offering etc. so that the user can choose
+      name: "{{ inventory_hostname }}"
+      service_offering: "{{ offering }}"
+      ssh_key: jumphostkey
+      networks: "{{ network }}"
+      zone: "{{ zone }}"
+      state: started
+    register: instance                                    # Register variable to get the local IP's
+
+  - name: Pause to Wait for All Nodes to come up          # Simple wait task
+    ansible.builtin.pause:
+      seconds: 30
+    when: instance is changed                             # only do this when a new node has been created
+
+  - name: Show Node IP's form Information                 # Show the local IP's as information for the user
+    ansible.builtin.debug:
+      msg: Instance {{ inventory_hostname }} has local ip {{ instance.default_ip }}
+    when: instance.default_ip is defined                  # Only do task when the variable has been registered
+
+  - name: Create Variables for the local Node IP's        # Save the local IP's as variables
+    ansible.builtin.lineinfile:
+      path: "{{ vars_file_path }}"                        # Path to vars File
+      regexp: '^{{ inventory_hostname }}_local_ip:'       # What needs to be changed
+      line: '{{ inventory_hostname }}_local_ip: "{{ instance.default_ip }}"'
+    register: alter                                       # Register variable to check if the playbook needs to wait
+    when: instance is defined                             # only do this if instance is a defined variable
+
+  - name: Pause to Save the new Variables                 # Simple wait task
+    ansible.builtin.pause:
+      seconds: 10
+    when: alter is changed                                # Only do this task if previous is changed
+
+  - name: Define Port Forwarding Rules                    # Define Rules for SSH port forwarding
+    ngine_io.cloudstack.cs_portforward:
+      api_secret: "{{ api_secret }}"                      # Api key secret and url so that ansible can make changes on CloudStack
+      api_url: "{{ api_host }}"
+      api_key: "{{ api_key }}"
+      vm: "{{ inventory_hostname }}"                      # Hostnames of the nodes
+      ip_address: "{{ natip }}"                           # Public IP of the network
+      zone: "{{ zone }}"                                  
+      private_port: 22                                    # SSH port
+      public_port: "{{ ansible_port }}"                   # Defined SSH ports for ansible to use
+
+  - name: Define Ingress Rules for SSH Connection         # Define ingress Rules for the network and public ip
+    ngine_io.cloudstack.cs_firewall:
+      api_secret: "{{ api_secret }}"                      # Api key secret and url so that ansible can make changes on CloudStack
+      api_url: "{{ api_host }}"
+      api_key: "{{ api_key }}"
+      cidrs: "{{ cidrs }}"                                # Only open the ports for SRG, SWISS TXT and Jumphost
+      ip_address: "{{ natip }}"                           # Where to open the ports
+      port: "{{ ansible_port }}"                      
+      zone: "{{ zone }}"
+      protocol: tcp
+    ignore_errors: true
