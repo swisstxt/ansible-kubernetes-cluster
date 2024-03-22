@@ -1,11 +1,22 @@
 ---
+# These are the default values. They can be changed to your needs. Please make sure that all Versions you put in are compatible with each other.
+# Version Variable for yum-utils package
 v_yum_utils: 4.3.0
+# Version Variable for python3-dnf-plugin-versionlock
 v_versionlock: 4.3.0
+# Version Variable for containerd
 v_containerd: 1.6.28
+# Version Variable for pip package manager
 v_pip: 21.2.3
+# Version Variable for pyyaml pip package
 v_pyyaml: 6.0.1
+# Version Variable for kubernetes pip package
 v_kubernetes: 29.0.0
+# Version Variable for jsonpatch pip package
 v_jsonpatch: 1.33
+# Version Variable for the Container Network Interface (CNI) Plugins
 v_cni_plugins: 1.2.0
+# Version Variable for the yum kubernetes Repository
 v_kubernetes_repo: 1.29
+# Version Variable for the kubelet, kubeadm and kubectl packages
 v_kube_packages: 1.29.1
