@@ -1,0 +1,21 @@
+---
+- name: Create '{{ kubernetes_user }}' Account on All Nodes             # Task to create new useraccount on all nodes
+  ansible.builtin.user:
+    name: "{{ kubernetes_user }}"                                       # Name of the user as variable
+    append: yes
+    state: present
+    createhome: yes
+    shell: /bin/bash
+
+- name: Allow '{{ kubernetes_user }}' to use Sudo without Password      # Task to give the new user sudo rights
+  ansible.builtin.lineinfile:
+    dest: /etc/sudoers
+    line: '{{ kubernetes_user }} ALL=(ALL) NOPASSWD: ALL'               # New line in sudoers file
+    validate: 'visudo -cf %s'
+
+- name: Copy SSH Key to Nodes                                           # SSH Key to connect directly as this user
+  ansible.posix.authorized_key:
+    user: "{{ kubernetes_user }}"
+    key: "{{ item }}"
+  with_file:
+    - ~/.ssh/id_rsa.pub                                                 # Public key file on localhost (jumphost)

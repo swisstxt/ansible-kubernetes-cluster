@@ -21,6 +21,8 @@ loadbalancer_http: "http-loadbalancer-workers"
 loadbalancer_https: "https-loadbalancer-workers"
 # Algorithm for loadbalancer
 loadbalancer_algorithm: "roundrobin"
+# Name for kubernetes user
+kubernetes_user: "kube"
 # Automatically created and changed variables DO NOT CHANGE
 natip: "185.27.109.29"
 worker1_local_ip: "10.1.1.212"

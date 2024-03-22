@@ -1,0 +1,14 @@
+---
+- name: Install Kubernetes on All Nodes         # Task to call the needed role
+  hosts: nodes
+  gather_facts: yes
+  connection: ssh                               # Use SSH as connection method to connect to the nodes
+  tags: common                                  # Tag if you only want to run this role
+  collections:                                  # Collections used in this Role
+    - community.gerneral
+    - ansible.posix
+  roles:                                        # Call the role common_nodes_config
+    - common_nodes_config
+  vars_files:                                   # Needed vars files in this role
+    - "{{ vars_file_path }}"
+    - hosts/group_vars/all/version.yml

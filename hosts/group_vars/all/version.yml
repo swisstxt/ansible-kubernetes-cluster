@@ -1,0 +1,11 @@
+---
+v_yum_utils: 4.3.0
+v_versionlock: 4.3.0
+v_containerd: 1.6.28
+v_pip: 21.2.3
+v_pyyaml: 6.0.1
+v_kubernetes: 29.0.0
+v_jsonpatch: 1.33
+v_cni_plugins: 1.2.0
+v_kubernetes_repo: 1.29
+v_kube_packages: 1.29.1

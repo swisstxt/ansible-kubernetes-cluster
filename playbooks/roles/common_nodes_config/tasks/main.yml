@@ -1,1 +1,6 @@
 # tasks file for roles/common_nodes_config
+- name: Set up Kubernetes User on All Nodes                   # Include the tasks from common_users_tasks.yml
+  ansible.builtin.include_tasks: common_users_tasks.yml
+
+- name: Install Kubernetes on All Nodes                       # Include the tasks from common_kubernetes_tasks.yml
+  ansible.builtin.import_tasks: common_kubernetes_tasks.yml
