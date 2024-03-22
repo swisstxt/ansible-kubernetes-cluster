@@ -1,13 +1,13 @@
 ---
 # handlers file for roles/common_nodes_config
-- name: Restart containerd  
+- name: Restart containerd              # Handler to restart containerd
   ansible.builtin.service:
     name: containerd
     state: restarted
-    enabled: yes
+    enabled: yes                        # Enable it at startup
 
-- name: Start kubelet
+- name: Start kubelet                   # Handler to start kubelet
   ansible.builtin.service:
     name: kubelet
     state: started
-    enabled: yes
+    enabled: yes                        # Enable it at startup
