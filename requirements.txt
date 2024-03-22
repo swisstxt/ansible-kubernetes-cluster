@@ -1,0 +1,6 @@
+ansible
+kubernetes
+pyyaml
+jsonpatch
+cs
+sshpubkeys

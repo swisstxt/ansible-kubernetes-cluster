@@ -74,7 +74,21 @@
       protocol: tcp
     run_once: true
     ignore_errors: true
-    when: inventory_hostname == 'master'
+    when: inventory_hostname == 'master'                  # Only run for master
+
+  - name: Define Port Forwarding for Kubeapi              # Task to forward the kubeapi port to the master node
+    ngine_io.cloudstack.cs_portforward:
+      api_secret: "{{ api_secret }}"                      # Api key secret and url so that ansible can make changes on CloudStack
+      api_url: "{{ api_host }}"
+      api_key: "{{ api_key }}"
+      vm: "{{ inventory_hostname }}"
+      ip_address: "{{ natip }}"
+      zone: "{{ zone }}"
+      private_port: "{{ kubeapi_port }}"
+      public_port: "{{ kubeapi_port }}"
+    run_once: true
+    ignore_errors: true
+    when: inventory_hostname == 'master'                  # Only run for master
 
   - name: Create http and https LoadBalanceing Rule       # Task to create http and https Loadbalancing Rules on CloudStack
     ngine_io.cloudstack.cs_loadbalancer_rule:
