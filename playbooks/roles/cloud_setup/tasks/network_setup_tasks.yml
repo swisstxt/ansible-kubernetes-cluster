@@ -14,7 +14,8 @@
     name: "{{ network }}"                                                 # Name of the Network on CloudStack
     zone: "{{ zone }}"                                                    # Name of the zone, in this case ZUERICH_IX for interxion 
     network_offering: DefaultIsolatedNetworkOfferingWithSourceNatService  # Specifies the Network offering, in this case, with source nat
-    state: present 
+    state: present
+  register: networkid
 
 - name: Get Public NAT IP for Network                                     # Task to assign a public IP to the network
   ngine_io.cloudstack.cs_ip_address:
@@ -24,10 +25,8 @@
     api_http_method: post                                                 # Specifies the API method in this case post
     zone: "{{ zone }}"                                                    # Name of the zone, in this case ZUERICH_IX for interxion 
     network: "{{ network }}"                                              # Name of the Network on CloudStack
-    tags:                                                                 # Tags to identify that this IP is already there if the playbook runs twice
-      - key: natip
-        value: ce8a9f8c-422f-4588-81a7-3c6db074bbc3
   register: publicip                                                      # Register the new created public IP
+  when: networkid.changed
 
 - name: Alter Vars.yml File                                               # Task to write the public ip as variable
   ansible.builtin.lineinfile: 
@@ -35,9 +34,7 @@
     regexp: "^natip:"                                                     # Where to put the new variable
     line: 'natip: "{{ publicip.ip_address }}"'                            # Content for new variable
   register: alter
-  when:                                                                   # Only do this task if the previous has changed
-    - publicip is not failed
-    - publicip is defined
+  when: publicip.changed                                                  # Only do this task if the previous has changed
 
 - name: Pause 10s to Save Variable                                        # Give it some time to save the variable properly
   ansible.builtin.pause:

@@ -1,5 +1,3 @@
----
 # tasks file for roles/create_nodes
 - name: Provision Nodes on CloudStack                     # Task description to import the tasks in the given file
   ansible.builtin.import_tasks: provision_nodes_tasks.yml
-  

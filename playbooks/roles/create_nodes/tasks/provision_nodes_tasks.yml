@@ -61,3 +61,50 @@
       zone: "{{ zone }}"
       protocol: tcp
     ignore_errors: true
+
+  - name: Define Ingress Rules for Kubeapi                # Task only for master, to open port 6443
+    ngine_io.cloudstack.cs_firewall:
+      api_secret: "{{ api_secret }}"                      # Api key secret and url so that ansible can make changes on CloudStack
+      api_url: "{{ api_host }}"
+      api_key: "{{ api_key }}"
+      cidrs: "{{ cidrs }}"
+      ip_address: "{{ natip }}"
+      port: "{{ kubeapi_port }}"
+      zone: "{{ zone }}"
+      protocol: tcp
+    run_once: true
+    ignore_errors: true
+    when: inventory_hostname == 'master'
+
+  - name: Create http and https LoadBalanceing Rule       # Task to create http and https Loadbalancing Rules on CloudStack
+    ngine_io.cloudstack.cs_loadbalancer_rule:
+      api_secret: "{{ api_secret }}"                      # Api key secret and url so that ansible can make changes on CloudStack
+      api_url: "{{ api_host }}"
+      api_key: "{{ api_key }}"
+      name: "{{ item.name }}"
+      public_ip: "{{ natip }}"
+      algorithm: "{{ loadbalancer_algorithm }}"
+      public_port: "{{ item.pubp }}"
+      private_port: "{{ item.privport }}"
+      protocol: tcp
+    loop:                                                 # Loops through a list of items, in this case for https and http
+      - { name: '{{ loadbalancer_http }}', pubp: 80, privport: 30080 }
+      - { name: '{{ loadbalancer_https }}', pubp: 443, privport: 30443 }
+    run_once: true
+    
+  
+  - name: Add Workers to LoadBalancing Rules              # Task to add all worker Nodes to the Loadbalancing Rules
+    ngine_io.cloudstack.cs_loadbalancer_rule_member:
+      api_secret: "{{ api_secret }}"                      # Api key secret and url so that ansible can make changes on CloudStack
+      api_url: "{{ api_host }}"
+      api_key: "{{ api_key }}"
+      name: "{{ item }}"
+      ip_address: "{{ natip }}"
+      vms: "{{ inventory_hostname }}"
+      state: present
+    loop: 
+      - "{{ loadbalancer_http }}"                         # Loop so that both http and https are being filled with instances
+      - "{{ loadbalancer_https }}"
+    when: inventory_hostname in groups['workers']         # Only for workers
+
+  

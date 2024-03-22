@@ -8,4 +8,4 @@
   vars_files:                                     # The vars Files it should use
     - hosts/group_vars/all/secret.yml
     - hosts/group_vars/all/version.yml
-    - hosts/group_vars/all/vars.yml
+    - "{{ vars_file_path }}"

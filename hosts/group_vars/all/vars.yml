@@ -1,10 +1,28 @@
 ---
-network: "vnet-kubcluster"    # Network name on CloudStack
-zone: "ZUERICH_IX"            # Zone name in which the network and nodes are created
-template: "AlmaLinux 9"       # Template for the Nodes
-offering: "2cpu_4gb"          # Service offering on CloudStack
-cidrs: ""                     # SRG and SWISS TXT public ip ranges
+# Network name on CloudStack
+network: "vnet-kubcluster"
+# Zone name in which the network and nodes are created    
+zone: "ZUERICH_IX"
+# Template for the Nodes            
+template: "AlmaLinux 9"
+# Service offering on CloudStack       
+offering: "2cpu_4gb"
+# SRG and SWISS TXT public ip ranges          
+cidrs: "['146.159.0.0/16','185.27.109.19/32','147.161.128.0/17']"
+# Variable for path of this File                     
 vars_file_path: "{{ playbook_dir }}/../hosts/group_vars/all/vars.yml"
-master_port: 2222             # Outbound SSH ports
+# Outbound SSH ports
+master_port: 2222             
 worker1_port: 2223
 worker2_port: 2224
+kubeapi_port: 6443
+# Loadbalancer Rules for kubernetes
+loadbalancer_http: "http-loadbalancer-workers"
+loadbalancer_https: "https-loadbalancer-workers"
+# Algorithm for loadbalancer
+loadbalancer_algorithm: "roundrobin"
+# Automatically created and changed variables DO NOT CHANGE
+natip: "185.27.109.29"
+worker1_local_ip: "10.1.1.212"
+master_local_ip: "10.1.1.95"
+worker2_local_ip: "10.1.1.237"
