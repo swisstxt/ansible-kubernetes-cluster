@@ -1,70 +1,70 @@
 ---
-- name: Check if /etc/modules-load.d/k8s.conf exists
+- name: Check if /etc/modules-load.d/k8s.conf exists                # Task to check if k8s.conf exists
   ansible.builtin.stat:
     path: "/etc/modules-load.d/k8s.conf"
-  register: k8s_conf_stat
+  register: k8s_conf_stat                                           # Register Variable to check if next Task needs to be run or not
 
-- name: Add Modules to /etc/modules-load.d/k8s.conf
+- name: Add Modules to /etc/modules-load.d/k8s.conf                 # Adds needed modules for kubernetes to kernel file
   ansible.builtin.blockinfile:
     path: "/etc/modules-load.d/k8s.conf"
     create: true
-    block: |
+    block: |                                                        # Block with all the Modules
       overlay
       br_netfilter
-  when: not k8s_conf_stat.stat.exists
+  when: not k8s_conf_stat.stat.exists                               # Use previously registered variable
 
-- name: Modprobe Command to Apply Modules
+- name: Modprobe Command to Apply Modules                           # Task to enable all the modules specified in the previous file
   community.general.modprobe:
     name: "{{ item }}"
     state: present
-  loop:
+  loop:                                                             # Loop through all the modules
     - overlay
     - br_netfilter
 
-- name: Check if /etc/sysctl.d/k8s.conf exists
+- name: Check if /etc/sysctl.d/k8s.conf exists                      # Task to see if the file k8s.conf exists
   ansible.builtin.stat:
     path: "/etc/sysctl.d/k8s.conf"
-  register: sysctl_k8s_stat
+  register: sysctl_k8s_stat                                         # Register Variable to check if next Task needs to be run or not
 
-- name: Create /etc/sysctl.d/k8s.conf
+- name: Create /etc/sysctl.d/k8s.conf                               # Task to create the file if it is not there
   ansible.builtin.file:
     path: "/etc/sysctl.d/k8s.conf"
     state: touch
-  when: not sysctl_k8s_stat.stat.exists
+  when: not sysctl_k8s_stat.stat.exists                             # Use previously registered variable
 
-- name: Add Variables to /etc/sysctl.d/k8s.conf
+- name: Add Variables to /etc/sysctl.d/k8s.conf                     # Task to add sysctl variables needed to run kubernetes correctly
   ansible.posix.sysctl:
     sysctl_file: "/etc/sysctl.d/k8s.conf"
     sysctl_set: true
-    reload: true
-    value: '1'
+    reload: true                                                    # Reload sysctl after adding the values
+    value: '1'                                                      # State the variables should be set to here 1
     name: "{{ item }}"
-  loop:
+  loop:                                                             # Loop through all the variables
     - net.bridge.bridge-nf-call-iptables
     - net.bridge.bridge-nf-call-ip6tables
     - net.ipv4.ip_forward
-  when: not sysctl_k8s_stat.stat.exists
+  when: not sysctl_k8s_stat.stat.exists                             # Use previously registered variable
 
-- name: Install yum-utils and versionlock
+- name: Install yum-utils and versionlock                           # Install yum packages to later versionlock the kubeadm, kubelet and kubectl version
   ansible.builtin.yum:
     name: 
       - yum-utils-"{{ v_yum_utils }}"
       - python3-dnf-plugin-versionlock-"{{ v_versionlock }}"
     state: present
-    update_cache: true
+    update_cache: true                                              # Also run yum update while installing the given packages
 
-- name: Check if Docker Repo is present
+- name: Check if Docker Repo is present                             # Task to see if the Docker Repo already has bee added
   ansible.builtin.stat:
     path: "/etc/yum.repos.d/docker-ce.repo"
-  register: docker_stat
+  register: docker_stat                                             # Register Variable to check if next Task needs to be run or not
 
-- name: Add Docker Repo
+- name: Add Docker Repo                                             # Download the Docker yum repo to the nodes if not already there
   ansible.builtin.get_url:
     url: https://download.docker.com/linux/centos/docker-ce.repo
     dest: "/etc/yum.repos.d/docker-ce.repo"
-  when: not docker_stat.stat.exists
+  when: not docker_stat.stat.exists                                 # Use previously registered variable
 
-- name: When Docker is installed, remove it
+- name: When Docker is installed, remove it                         # Before installing containerd, see if Docker Engine is installed and remove if it is
   ansible.builtin.yum:
     name:
       - docker
@@ -77,109 +77,109 @@
       - docker-engine
     state: removed
 
-- name: Install containerd from Docker Repo
+- name: Install containerd from Docker Repo                         # Install containerd as CRI for kubernetes from the docker repo
   ansible.builtin.yum:
     name: containerd.io-"{{ v_containerd }}"
     state: present
-    update_cache: true
+    update_cache: true                                              # Also run yum update while installing the given package
 
-- name: Install python3-pip package
+- name: Install python3-pip package                                 # Install python3-pip to later install pip packages
   ansible.builtin.yum:
     name: python3-pip-"{{ v_pip }}"
     state: present
-    update_cache: true
+    update_cache: true                                              # Also run yum update while installing the given package
 
-- name: Check if containerd Folder exists
+- name: Check if containerd Folder exists                           # Task to check if containerd folder exists
   ansible.builtin.stat:
     path: "/etc/containerd"
-  register: containerd_stat
+  register: containerd_stat                                         # Register Variable to check if next Task needs to be run or not   
 
-- name: Create containerd dir
+- name: Create containerd dir                                       # Create containerd Folder if not exist
   ansible.builtin.file:
     path: "/etc/containerd"
     mode: '0755'
     state: directory
-  when: not containerd_stat.stat.exists
+  when: not containerd_stat.stat.exists                             # Use previously registered variable
 
-- name: Copy containerd Config to Nodes
+- name: Copy containerd Config to Nodes                             # Task to use containerd-config.toml and systemd cgroup driver
   ansible.builtin.copy:
     src: containerd-config.toml
     dest: "/etc/containerd/config.toml"
-  notify:
+  notify:                                                           # Notify the handler to restart containerd after all tasks
     - Restart containerd
 
-- name: Install Pip Modules for Kubernetes
+- name: Install Pip Modules for Kubernetes                          # Install pip modules to later run the k8s ansible module to create deployments
   ansible.builtin.pip:
     name:
       - pyyaml=={{ v_pyyaml }}
       - kubernetes=={{ v_kubernetes }}
       - jsonpatch=={{ v_jsonpatch }}
 
-- name: Stop local Firewall
+- name: Stop local Firewall                                         # Disable the firewall, because the CloudStack firewall is being used
   ansible.builtin.service:
     name: firewalld
     state: stopped
     enabled: no
 
-- name: Check if /opt/cni/bin exists
+- name: Check if /opt/cni/bin exists                                # Check if the folder for the CNI Plugins exists
   ansible.builtin.stat:
     path: "/opt/cni/bin"
-  register: cni_dir_stat
+  register: cni_dir_stat                                            # Register Variable to check if next Task needs to be run or not
 
-- name: Create /opt/cni/bin folder
+- name: Create /opt/cni/bin folder                                  # Create folder for all the CNI plugins
   ansible.builtin.file:
     mode: '0755'
-    state: directory
+    state: directory                                                # To create a directory and not a file
     path: "/opt/cni/bin"
-  when: not cni_dir_stat.stat.exists
+  when: not cni_dir_stat.stat.exists                                # Use previously registered variable
 
-- name: Check if CNI Plugins exists
+- name: Check if CNI Plugins exists                                 # See if the Plugins already have been downloaded
   ansible.builtin.stat:
     path: "/tmp/cni-plugins-linux-amd64-v{{ v_cni_plugins }}.tgz"
-  register: cni_plugins_stat
+  register: cni_plugins_stat                                        # Register Variable to check if next Task needs to be run or not
 
-- name: Download CNI Plugins
+- name: Download CNI Plugins                                        # Download the CNI Plugins if they are not already downloaded
   ansible.builtin.get_url:
     url: https://github.com/containernetworking/plugins/releases/download/v{{ v_cni_plugins }}/cni-plugins-linux-amd64-v{{ v_cni_plugins }}.tgz
     dest: "/tmp"
     mode: '0755'
-  when: not cni_plugins_stat.stat.exists
+  when: not cni_plugins_stat.stat.exists                            # Use previously registered variable
 
-- name: Unpack CNI Plugins to /opt/cni/bin
+- name: Unpack CNI Plugins to /opt/cni/bin                          # Install CNI Plugins to the correct directory
   ansible.builtin.unarchive:
     src: "/tmp/cni-plugins-linux-amd64-v{{ v_cni_plugins }}.tgz"
     dest: "/opt/cni/bin"
     remote_src: true
 
-- name: Disable Swap Storage
+- name: Disable Swap Storage                                        # Kubernetes will not run if swap is enabled
   ansible.builtin.shell: |
     sudo swapoff -a
     sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
-  when: ansible_swaptotal_mb > 0
+  when: ansible_swaptotal_mb > 0                                    # Only do it when swap is more than 0 mb
 
-- name: Check the state of SELinux
+- name: Check the state of SELinux                                  # Check the mode of SELinux to run kubernetes it must be permissive
   ansible.builtin.command: getenforce
-  register: selinux_stat
+  register: selinux_stat                                            # Register Variable to check if next Task needs to be run or not
   changed_when: false
 
-- name: Set SELinux to permissive mode
+- name: Set SELinux to permissive mode                              # Set to Permissive mode if it isn't
   ansible.builtin.shell: |
     sudo setenforce 0
     sudo sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
-  when: selinux_stat.stdout != "Permissive"
+  when: selinux_stat.stdout != "Permissive"                         # Use previously registered variable
 
-- name: Check if kubernetes Yum Repo File exists
+- name: Check if kubernetes Yum Repo File exists                    # See if kubernetes repo has already been added
   ansible.builtin.stat:
     path: "/etc/yum.repos.d/kubernetes.repo"
-  register: kubernetes_repo_stat
+  register: kubernetes_repo_stat                                    # Register Variable to check if next Task needs to be run or not
 
-- name: Create Kubernetes.repo File
+- name: Create Kubernetes.repo File                                 # Create repo file for kubernetes if not existing
   ansible.builtin.file:
     path: "/etc/yum.repos.d/kubernetes.repo"
     state: touch
-  when: not kubernetes_repo_stat.stat.exists
+  when: not kubernetes_repo_stat.stat.exists                        # Use previously registered variable
 
-- name: Add kubernetes Repo to Repo File
+- name: Add kubernetes Repo to Repo File                            # Add the correct information to the kubernetes repo file
   ansible.builtin.blockinfile:
     path: "/etc/yum.repos.d/kubernetes.repo"
     block: |
@@ -190,20 +190,20 @@
       gpgcheck=1
       gpgkey=https://pkgs.k8s.io/core:/stable:/v{{ v_kubernetes_repo }}/rpm/repodata/repomd.xml.key
 
-- name: Install kubeadm, kubelet, kubectl
+- name: Install kubeadm, kubelet, kubectl                           # Install the given version of kubelet, kubeadm and kubectl
   ansible.builtin.yum:
     name:
       - kubelet-{{ v_kube_packages }}
       - kubeadm-{{ v_kube_packages }}
       - kubectl-{{ v_kube_packages }}
-    update_cache: true
+    update_cache: true                                              # Also run yum update while installing the given package
     allow_downgrade: true
     state: present
-    disable_excludes: repoid
-  notify: 
+    disable_excludes: repoid                                        # Include the kubernetes repo
+  notify:                                                           # Notify handler to start kubelet and enable it after startup after all the tasks
     - Start kubelet
 
-- name: Lock kubeadm, kubelet, kubectl Version
+- name: Lock kubeadm, kubelet, kubectl Version                      # Lock the chosen version of kubelet, kubeadm and kubectl
   community.general.yum_versionlock:
     state: present
     name:
@@ -211,7 +211,7 @@
       - kubeadm
       - kubectl
 
-- name: Pause before Continue
+- name: Pause before Continue                                       # Short pause to let the nodes cool down before configuring the cluster :)
   ansible.builtin.pause:
     seconds: 10
 
