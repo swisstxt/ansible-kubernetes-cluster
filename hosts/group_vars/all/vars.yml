@@ -11,7 +11,7 @@ offering: "2cpu_4gb"
 cidrs: "['146.159.0.0/16','185.27.109.19/32','147.161.128.0/17']"
 # Variable for path of this File                     
 vars_file_path: "{{ playbook_dir }}/../hosts/group_vars/all/vars.yml"
-# Outbound SSH ports
+# Outbound SSH & kubeapi ports
 master_port: 2222             
 worker1_port: 2223
 worker2_port: 2224

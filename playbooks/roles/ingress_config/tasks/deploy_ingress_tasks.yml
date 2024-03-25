@@ -1,0 +1,20 @@
+---
+- name: Copy deploy_default_values.yml to Master
+  ansible.builtin.copy:
+    dest: "/etc/kubernetes/deploy_default_values.yml"
+    src: deploy_default_values.yml
+
+- name: Copy custom_values.yml to Master
+  ansible.builtin.copy:
+    dest: "/etc/kubernetes/deploy_default_values.yml"
+    src: deploy_default_values.yml
+
+- name: Deploy Do Not Change Values of Nginx Ingress
+  kubernetes.core.k8s:
+    src: "/etc/kubernetes/deploy_default_values.yml"
+    state: present
+
+- name: Deploy Custom Values of Nginx Ingress
+  kubernetes.core.k8s:
+    src: "/etc/kubernetes/deploy_default_values.yml"
+    state: present

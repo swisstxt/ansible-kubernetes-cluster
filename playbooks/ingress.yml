@@ -1,0 +1,13 @@
+---
+- name: Deploy Ingress Controller on Cluster
+  hosts: masters
+  connection: ssh
+  remote_user: "{{ kubernetes_user }}"
+  become: yes
+  become_user: "{{ kubernetes_user }}"
+  gather_facts: no
+  tags: ingress
+  collections:
+    - kubernetes.core
+  roles:
+    - ingress_config
