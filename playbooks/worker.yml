@@ -1,0 +1,15 @@
+---
+- name: All Configurations on Worker Nodes              # All tasks are configurations specifically for workers
+  hosts: workers                                        # Only execute on workers group
+  become: yes
+  become_user: "{{ kubernetes_user }}"                  # Become the kubernetes_user
+  connection: ssh                                       # Use SSH to connect
+  remote_user: "{{ kubernetes_user }}"                  # SSH user is kubernetes_user
+  tags: workers                                         # If the user only wants to run this role he can use the tag workers
+  gather_facts: no                                      # Do not gather facts about the workers
+  roles:                                                # Call the worker_node role
+    - worker_node
+  vars_file:                                            # The vars Files it should use
+    - hosts/group_vars/all/secret.yml
+    - hosts/group_vars/all/version.yml
+    - "{{ vars_file_path }}"
