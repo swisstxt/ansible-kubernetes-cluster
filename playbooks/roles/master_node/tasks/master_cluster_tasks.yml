@@ -8,6 +8,7 @@
   args:                                                                                                             # Do the command in the $HOME directory and create a file if the cluster was initialized
     chdir: $HOME
     creates: cluster-initialized.txt
+  ignore_errors: true
   when: cluster_info_stat.rc != 0                                                                                   # Only do it when the previous task hasen't been successfull
 
 - name: Check if the Config already exists                                                                          # Check if there already is a kubernetes config
@@ -23,10 +24,12 @@
   when: not kube_config_stat.stat.exists                                                                            # Only do it when the previous task hasen't been successfull
 
 - name: Copy the admin.conf to the new .kube Folder                                                                 # Copy the admin.conf to the .kube folder
+  become: yes
+  become_user: root
   ansible.builtin.copy:
     src: "/etc/kubernetes/admin.conf"
-    dest: "$HOME/.kube"
-    remote_src: true
+    dest: "/home/{{ kubernetes_user }}/.kube/config"
+    remote_src: yes
     owner: "{{ kubernetes_user }}"
     group: "{{ kubernetes_user }}"
   when: not kube_config_stat.stat.exists                                                                            # Only do it when the previous task hasen't been successfull
@@ -37,9 +40,13 @@
   register: flannel_stat                                                                                            # Register variable to see if next task needs to be run
 
 - name: Download flannel.yml                                                                                        # Task to download flannel if not already there
+  become: yes
+  become_user: root
   ansible.builtin.get_url:
     url: https://github.com/flannel-io/flannel/releases//download/v{{ v_flannel }}/kube-flannel.yml                 # Download the given flannel version
     dest: "/etc/kubernetes/flannel-{{ v_flannel }}.yml"
+    owner: "{{ kubernetes_user }}"
+    group: "{{ kubernetes_user }}"
   when: not flannel_stat.stat.exists
 
 - name: Install Container Network Interface Flannel                                                                 # Install the wanted flannel version
@@ -56,10 +63,12 @@
   when: cluster_join_command is not skipped                                                                         # Only do this step if the command was actually created
 
 - name: Add the new Join Command to vars.yml as Variable                                                            # Create a new Variable for the join command
+  become: yes
+  become_user: root
   ansible.builtin.lineinfile:
     path: "{{ vars_file_path }}"
     regexp: "^cluster_joincommand:"
-    line: 'cluster_joincommand: "sudo {{ cluster_join_command.stdout }}'
+    line: 'cluster_joincommand: "sudo {{ cluster_join_command.stdout }}"'
   when: cluster_join_command is not skipped                                                                         # Only do this when the join command has been changed
   delegate_to: localhost                                                                                            # Execute this step on the localhost and not the master
 
