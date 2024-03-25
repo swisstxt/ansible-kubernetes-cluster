@@ -1,69 +1,69 @@
-- name: Check if a Kubernetes Cluster is already running
-  ansible.builtin.shell: kubectl cluster-info
-  ignore_errors: true
-  register: cluster_info_stat
+- name: Check if a Kubernetes Cluster is already running                                                            # Task to check if already a kubernetes cluster is running
+  ansible.builtin.shell: kubectl cluster-info                                                                       # Command to get cluster info if there is one
+  ignore_errors: true                                                                                               # When there is no cluster, the playbook would stop with an error, so ignore_errors=true
+  register: cluster_info_stat                                                                                       # Register variable to see if next task needs to be run
 
 - name: Initialize the Cluster
-  ansible.builtin.shell: sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-cert-extra-sans={{ natip }}
-  args:
+  ansible.builtin.shell: sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-cert-extra-sans={{ natip }} # Command to initialize the cluster use 10.244.0.0/16 as pod network and include natip in the config
+  args:                                                                                                             # Do the command in the $HOME directory and create a file if the cluster was initialized
     chdir: $HOME
     creates: cluster-initialized.txt
   when: cluster_info_stat.rc != 0                                                                                   # Only do it when the previous task hasen't been successfull
 
-- name: Check if the Config already exists
+- name: Check if the Config already exists                                                                          # Check if there already is a kubernetes config
   ansible.builtin.stat:
     path: "$HOME/.kube"
-  register: kube_config_stat
+  register: kube_config_stat                                                                                        # Register variable to see if next task needs to be run
 
-- name: Create .kube Folder
+- name: Create .kube Folder                                                                                         # Create .kube folder if not already there
   ansible.builtin.file:
     path: "$HOME/.kube"
     state: directory
     mode: '0755'
-  when: not kube_config_stat.stat.exists
+  when: not kube_config_stat.stat.exists                                                                            # Only do it when the previous task hasen't been successfull
 
-- name: Copy the admin.conf to the new .kube Folder
+- name: Copy the admin.conf to the new .kube Folder                                                                 # Copy the admin.conf to the .kube folder
   ansible.builtin.copy:
     src: "/etc/kubernetes/admin.conf"
     dest: "$HOME/.kube"
     remote_src: true
     owner: "{{ kubernetes_user }}"
     group: "{{ kubernetes_user }}"
-  when: not kube_config_stat.stat.exists
+  when: not kube_config_stat.stat.exists                                                                            # Only do it when the previous task hasen't been successfull
 
-- name: Check if flannel.yml exists
+- name: Check if flannel.yml exists                                                                                 # See if flannel already has been downloaded
   ansible.builtin.stat:
     path: "/etc/kubernetes/flannel-{{ v_flannel }}.yml"
-  register: flannel_stat
+  register: flannel_stat                                                                                            # Register variable to see if next task needs to be run
 
-- name: Download flannel.yml
+- name: Download flannel.yml                                                                                        # Task to download flannel if not already there
   ansible.builtin.get_url:
-    url: https://github.com/flannel-io/flannel/releases//download/v{{ v_flannel }}/kube-flannel.yml
+    url: https://github.com/flannel-io/flannel/releases//download/v{{ v_flannel }}/kube-flannel.yml                 # Download the given flannel version
     dest: "/etc/kubernetes/flannel-{{ v_flannel }}.yml"
   when: not flannel_stat.stat.exists
 
-- name: Install Container Network Interface Flannel
+- name: Install Container Network Interface Flannel                                                                 # Install the wanted flannel version
   ansible.builtin.shell: kubectl apply -f /etc/kubernetes/flannel-{{ v_flannel }}.yml
 
-- name: Get Join Command
+- name: Get Join Command                                                                                            # Print out the join command for the workers
   ansible.builtin.shell: sudo kubeadm token create --print-join-command
-  register: cluster_join_command
-  when: cluster_info_stat.rc != 0
+  register: cluster_join_command                                                                                    # Register the join command
+  when: cluster_info_stat.rc != 0                                                                                   # Only do this step if the cluster was newly created
 
-- name: Show Join Command as Information for the User
+- name: Show Join Command as Information for the User                                                               # Task to show the actual join command to the user
   ansible.builtin.debug:
     msg: "{{ cluster_join_command.stdout }}"
-  when: cluster_join_command is not skipped
+  when: cluster_join_command is not skipped                                                                         # Only do this step if the command was actually created
 
-- name: Add the new Join Command to vars.yml as Variable
+- name: Add the new Join Command to vars.yml as Variable                                                            # Create a new Variable for the join command
   ansible.builtin.lineinfile:
     path: "{{ vars_file_path }}"
     regexp: "^cluster_joincommand:"
     line: 'cluster_joincommand: "sudo {{ cluster_join_command.stdout }}'
-  when: cluster_join_command is not skipped
-  delegate_to: localhost
+  when: cluster_join_command is not skipped                                                                         # Only do this when the join command has been changed
+  delegate_to: localhost                                                                                            # Execute this step on the localhost and not the master
 
-- name: Pause before Continue
+- name: Pause before Continue                                                                                       # Short pause if the cluster was newly initialized
   ansible.builtin.pause:
     seconds: 10
   when: cluster_join_command is not skipped
