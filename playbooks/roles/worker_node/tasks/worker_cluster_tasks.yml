@@ -1,0 +1,9 @@
+---
+- name: Check if Node already Joined a Cluster                  # Task to check if the node already joined a cluster
+  ansible.builtin.stat:
+    path: "/etc/kubernetes/kubelet.conf"
+  register: kubelet_stat                                        # Register variable to check if the next task needs to be executed
+
+- name: Join the Cluster using the Join Command                 # Task to join the cluster using the previously set variable
+  ansible.builtin.shell: "{{ cluster_joincommand }}"            # Use the join_command variable
+  when: not kubelet_stat.stat.exists                            # Only on nodes with no kubelet.conf

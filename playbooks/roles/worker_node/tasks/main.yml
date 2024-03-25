@@ -1,2 +1,3 @@
----
 # tasks file for roles/worker_node
+- name: Join All Workers to the Cluster                     # Import all tasks for the worker nodes
+  ansible.builtin.import_tasks: worker_cluster_tasks.yml
