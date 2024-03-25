@@ -1,7 +1,7 @@
 version = 2
 disabled_plugins = []
  
-# Containerd runc
+# Containerd runc and enable SystemdCgroup driver
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
   runtime_type = "io.containerd.runc.v2"
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
