@@ -20,3 +20,5 @@ v_cni_plugins: 1.2.0
 v_kubernetes_repo: 1.29
 # Version Variable for the kubelet, kubeadm and kubectl packages
 v_kube_packages: 1.29.1
+# Version Variable for flannel version
+v_flannel: 0.24.3

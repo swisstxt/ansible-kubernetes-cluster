@@ -1,23 +1,69 @@
-- name:
+- name: Check if a Kubernetes Cluster is already running
+  ansible.builtin.shell: kubectl cluster-info
+  ignore_errors: true
+  register: cluster_info_stat
 
-- name:
+- name: Initialize the Cluster
+  ansible.builtin.shell: sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-cert-extra-sans={{ natip }}
+  args:
+    chdir: $HOME
+    creates: cluster-initialized.txt
+  when: cluster_info_stat.rc != 0                                                                                   # Only do it when the previous task hasen't been successfull
 
-- name:
+- name: Check if the Config already exists
+  ansible.builtin.stat:
+    path: "$HOME/.kube"
+  register: kube_config_stat
 
-- name:
+- name: Create .kube Folder
+  ansible.builtin.file:
+    path: "$HOME/.kube"
+    state: directory
+    mode: '0755'
+  when: not kube_config_stat.stat.exists
 
-- name:
+- name: Copy the admin.conf to the new .kube Folder
+  ansible.builtin.copy:
+    src: "/etc/kubernetes/admin.conf"
+    dest: "$HOME/.kube"
+    remote_src: true
+    owner: "{{ kubernetes_user }}"
+    group: "{{ kubernetes_user }}"
+  when: not kube_config_stat.stat.exists
 
-- name:
+- name: Check if flannel.yml exists
+  ansible.builtin.stat:
+    path: "/etc/kubernetes/flannel-{{ v_flannel }}.yml"
+  register: flannel_stat
 
-- name:
+- name: Download flannel.yml
+  ansible.builtin.get_url:
+    url: https://github.com/flannel-io/flannel/releases//download/v{{ v_flannel }}/kube-flannel.yml
+    dest: "/etc/kubernetes/flannel-{{ v_flannel }}.yml"
+  when: not flannel_stat.stat.exists
 
-- name:
+- name: Install Container Network Interface Flannel
+  ansible.builtin.shell: kubectl apply -f /etc/kubernetes/flannel-{{ v_flannel }}.yml
 
-- name:
+- name: Get Join Command
+  ansible.builtin.shell: sudo kubeadm token create --print-join-command
+  register: cluster_join_command
+  when: cluster_info_stat.rc != 0
 
-- name:
+- name: Show Join Command as Information for the User
+  ansible.builtin.debug:
+    msg: "{{ cluster_join_command.stdout }}"
+  when: cluster_join_command is not skipped
 
-- name:
+- name: Add the new Join Command to vars.yml as Variable
+  ansible.builtin.lineinfile:
+    path: "{{ vars_file_path }}"
+    regexp: "^cluster_joincommand:"
+    line: 'cluster_joincommand: "sudo {{ cluster_join_command.stdout }}'
+  when: cluster_join_command is not skipped
+  delegate_to: localhost
 
-- name:
+- name: Pause before Continue
+  ansible.builtin.pause:
+    seconds: 10
+  when: cluster_join_command is not skipped

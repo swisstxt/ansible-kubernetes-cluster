@@ -2,7 +2,9 @@
 - name: All Configurations on Master Node               # All the tasks in this playbook are for the master node
   hosts: masters                                        # Execute all tasks on master
   connection: ssh                                       # Create connection via ssh
-  remote_user: kube                                     # All the tasks are being executed by the kube user
+  remote_user: "{{ kubernetes_user }}"                  # All the tasks are being executed by the kube user
+  become: yes
+  become_user: "{{ kubernetes_user }}"                  # Make sure to become user kube
   gather_facts: no                                      # Do not gather_facts about the master because it's not needed in this case
   tags: master                                          # Tags to only play the role master_node
   roles:                                                # The roles that are being executed through this playbook

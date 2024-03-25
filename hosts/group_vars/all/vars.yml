@@ -28,3 +28,4 @@ natip: "185.27.109.29"
 worker1_local_ip: "10.1.1.212"
 master_local_ip: "10.1.1.95"
 worker2_local_ip: "10.1.1.237"
+cluster_joincommand:
