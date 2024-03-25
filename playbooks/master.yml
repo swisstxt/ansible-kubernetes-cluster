@@ -9,7 +9,7 @@
   tags: master                                          # Tags to only play the role master_node
   roles:                                                # The roles that are being executed through this playbook
     - master_node
-  vars_file:                                            # The vars Files it should use
+  vars_files:                                            # The vars Files it should use
     - hosts/group_vars/all/secret.yml
     - hosts/group_vars/all/version.yml
     - "{{ vars_file_path }}"
