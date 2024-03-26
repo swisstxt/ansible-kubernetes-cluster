@@ -37,12 +37,12 @@
             metadata:
               labels:
                 app: example                                                # Label for the pod
-              spec:
-                containers:
-                - image: nginx:latest                                       # Image the Conatainer should use
-                  name: example-container                                   # Name of the container
-                  ports:
-                  - containerPort: 80                                       # Set containerPort to 80 for nginx
+            spec:
+              containers:
+              - image: nginx:latest                                         # Image the Conatainer should use
+                name: example-container                                     # Name of the container
+                ports:
+                - containerPort: 80                                         # Set containerPort to 80 for nginx
 
   - name: Create a Service to Expose the Container Ports                    # Creates a service to expose the ports of the deployment
     kubernetes.core.k8s:
@@ -71,7 +71,7 @@
           name: example-ingress                                             # Name of the Ingress
           namespace: example                                                # Name of the using namespace
           annotations:                                                      # Special attributes for the ingress to consider, in this case only expose for SRG
-            nginx.ingress.kubernetes.io/whitelist-source-range: "146.159.0.0/16"
+            nginx.ingress.kubernetes.io/whitelist-source-range: "147.161.128.0/17"
         spec:
           ingressClassName: nginx
           rules:
@@ -82,6 +82,6 @@
                 pathType: Prefix                                            # Must match the path
                 backend:
                   service:
-                  name: example-service                                     # Connect to the corresponding service
-                  port:
-                    number: 80                                              # Connect on port 80
+                    name: example-service                                   # Connect to the corresponding service
+                    port:
+                      number: 80                                            # Connect on port 80
