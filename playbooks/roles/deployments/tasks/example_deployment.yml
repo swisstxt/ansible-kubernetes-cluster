@@ -71,14 +71,14 @@
           name: example-ingress                                             # Name of the Ingress
           namespace: example                                                # Name of the using namespace
           annotations:                                                      # Special attributes for the ingress to consider, in this case only expose for SRG
-            nginx.ingress.kubernetes.io/whitelist-source-range: "147.161.128.0/17"
+            nginx.ingress.kubernetes.io/whitelist-source-range: 0.0.0.0/0
         spec:
           ingressClassName: nginx
           rules:
           - host:                                                           # Can also be a DNS name
             http:
               paths:
-              - path: /example-deployment                                   # Path to connect to in the Browser.
+              - path: /                                                     # Path to connect to in the Browser.
                 pathType: Prefix                                            # Must match the path
                 backend:
                   service:
