@@ -1,0 +1,87 @@
+---
+# This Playbook uses the kubeconfig in the ~/.kube/config file to connect to the cluster
+# This kubeconfig file can be obtained by copying the file from the kubernetes_user's .kube folder to the localhost
+- name: Example Deployment of simple Webserver
+  hosts: localhost
+  gather_facts: no
+  collections:
+    - kubernetes.core.k8s
+  vars_files:                                            # The vars Files it should use
+    - hosts/group_vars/all/secret.yml
+    - hosts/group_vars/all/version.yml
+    - "{{ vars_file_path }}"
+  tasks:
+
+  - name: Create Example Namespace
+    kubernetes.core.k8s:
+      name: example
+      api_version: v1
+      kind: Namespace
+      state: present
+
+  - name: Create a Deployment for the Example App
+    kubernetes.core.k8s:
+      state: present
+      definition:
+        apiVersion: v1
+        kind: Deployment
+        metadata:
+          name: example-deployment
+          namespace: example
+        spec:
+          replicas: 2
+          selector:
+            matchLabels:
+              app: example
+          template:
+            metadata:
+              labels:
+                app: example
+              spec:
+                containers:
+                - image: nginx:latest
+                  name: example-container
+                  ports:
+                  - containerPort: 80
+
+  - name: Create a Service to Expose the Container Ports
+    kubernetes.core.k8s:
+      state: present
+      definition:
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: example-service
+          namespace: example
+        spec:
+          ports:
+          - protocol: TCP
+            port: 80
+            targetPort: 80
+          selector:
+            app: example
+
+  - name: Create a Ingress for the Service and Deployment
+    kubernetes.core.k8s:
+      state: present
+      definition:
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: example-ingress
+          namespace: example
+          annotations:
+            nginx.ingress.kubernetes.io/whitelist-source-range: "146.159.0.0/16"
+        spec:
+          ingressClassName: nginx
+          rules:
+          - host:
+            http:
+              paths:
+              - path: /example-deployment
+                pathType: Prefix
+                backend:
+                  service:
+                  name: example-service
+                  port:
+                    number: 80
