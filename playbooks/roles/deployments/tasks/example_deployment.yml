@@ -6,82 +6,82 @@
   gather_facts: no
   collections:
     - kubernetes.core.k8s
-  vars_files:                                            # The vars Files it should use
+  vars_files:                                                               # The vars Files it should use
     - hosts/group_vars/all/secret.yml
     - hosts/group_vars/all/version.yml
     - "{{ vars_file_path }}"
-  tasks:
+  tasks:                                                                    # Here the section for the tasks begins
 
-  - name: Create Example Namespace
+  - name: Create Example Namespace                                          # Create a new namespace for the new deployment
     kubernetes.core.k8s:
       name: example
       api_version: v1
       kind: Namespace
       state: present
 
-  - name: Create a Deployment for the Example App
+  - name: Create a Deployment for the Example App                           # Create a deployment using the nginx image
     kubernetes.core.k8s:
       state: present
-      definition:
+      definition:                                                           # Configuration in yaml format
         apiVersion: v1
-        kind: Deployment
+        kind: Deployment                                                    # New deployment
         metadata:
           name: example-deployment
-          namespace: example
+          namespace: example                                                # In which namespace the deployment should be
         spec:
-          replicas: 2
-          selector:
+          replicas: 2                                                       # How many instances, in this case two, on every node one
+          selector:                                                         # Specifies how the deployment finds the correct pod to manage
             matchLabels:
               app: example
           template:
             metadata:
               labels:
-                app: example
+                app: example                                                # Label for the pod
               spec:
                 containers:
-                - image: nginx:latest
-                  name: example-container
+                - image: nginx:latest                                       # Image the Conatainer should use
+                  name: example-container                                   # Name of the container
                   ports:
-                  - containerPort: 80
+                  - containerPort: 80                                       # Set containerPort to 80 for nginx
 
-  - name: Create a Service to Expose the Container Ports
+  - name: Create a Service to Expose the Container Ports                    # Creates a service to expose the ports of the deployment
     kubernetes.core.k8s:
       state: present
       definition:
         apiVersion: v1
         kind: Service
         metadata:
-          name: example-service
-          namespace: example
+          name: example-service                                             # The name the service should use
+          namespace: example                                                # Specifies the namespace
         spec:
           ports:
-          - protocol: TCP
-            port: 80
-            targetPort: 80
+          - protocol: TCP                                                   # Protocol to use
+            port: 80                                                        # Incoming port 
+            targetPort: 80                                                  # The port the deployment listens on
           selector:
-            app: example
+            app: example                                                    # Searches for pods with the same label
 
-  - name: Create a Ingress for the Service and Deployment
+  - name: Create a Ingress for the Service and Deployment                   # Create an ingress to expose it outside the cluster
     kubernetes.core.k8s:
       state: present
       definition:
         apiVersion: networking.k8s.io/v1
         kind: Ingress
         metadata:
-          name: example-ingress
-          namespace: example
-          annotations:
+          name: example-ingress                                             # Name of the Ingress
+          namespace: example                                                # Name of the using namespace
+          annotations:                                                      # Special attributes for the ingress to consider, in this case only expose for SRG
             nginx.ingress.kubernetes.io/whitelist-source-range: "146.159.0.0/16"
         spec:
           ingressClassName: nginx
           rules:
-          - host:
+          - host:                                                           # Can also be a DNS name
             http:
               paths:
-              - path: /example-deployment
-                pathType: Prefix
+              - path: /example-deployment                                   # Path to connect to in the Browser.
+                pathType: Prefix                                            # Must match the path
                 backend:
                   service:
-                  name: example-service
+                  name: example-service                                     # Connect to the corresponding service
                   port:
-                    number: 80
+                    number: 80                                              # Connect on port 80
