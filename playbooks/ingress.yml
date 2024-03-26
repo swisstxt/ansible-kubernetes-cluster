@@ -1,13 +1,13 @@
 ---
-- name: Deploy Ingress Controller on Cluster
-  hosts: masters
-  connection: ssh
-  remote_user: "{{ kubernetes_user }}"
-  become: yes
+- name: Deploy Ingress Controller on Cluster                    # Playbook to call the role to deploy the nginx ingress controller
+  hosts: masters                                                # Olny execute on master
+  connection: ssh                                               # Use SSH to connect
+  remote_user: "{{ kubernetes_user }}"                          # Execute as kubernetes_user in remote
+  become: yes                                                   # Become kubernetes_user
   become_user: "{{ kubernetes_user }}"
-  gather_facts: no
-  tags: ingress
-  collections:
+  gather_facts: no                                              # Do not gather facts
+  tags: ingress                                                 # Tag ingress to only execute this part of the playbook
+  collections:                                                  # Use the kubernetes.core.k8s collection
     - kubernetes.core
-  roles:
+  roles:                                                        # Call the ingress_config role and its tasks
     - ingress_config
