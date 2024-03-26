@@ -1,13 +1,21 @@
 ---
 - name: Copy deploy_default_values.yml to Master              # Copy file from files folder to the master node
+  become: yes
+  become_user: root
   ansible.builtin.copy:
     dest: "/etc/kubernetes/deploy_default_values.yml"
     src: deploy_default_values.yml
+    owner: "{{ kubernetes_user }}"
+    group: "{{ kubernetes_user }}"
 
-- name: Copy custom_values.yml to Master                      # Copy file from files folder to the master node
+- name: Copy deploy_custom_values.yml to Master                      # Copy file from files folder to the master node
+  become: yes
+  become_user: root
   ansible.builtin.copy:
     dest: "/etc/kubernetes/deploy_custom_values.yml"
     src: deploy_custom_values.yml
+    owner: "{{ kubernetes_user }}"
+    group: "{{ kubernetes_user }}"
 
 - name: Deploy Do Not Change Values of Nginx Ingress          # Apply the yaml configuration file
   kubernetes.core.k8s:                                        # Use the kubernetes.core.k8s module to apply the config

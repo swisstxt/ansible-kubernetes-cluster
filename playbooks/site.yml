@@ -4,4 +4,4 @@
 - ansible.builtin.import_playbook: common.yml
 - ansible.builtin.import_playbook: master.yml
 - ansible.builtin.import_playbook: worker.yml
-#- ansible.builtin.import_playbook: ingress.yml
+- ansible.builtin.import_playbook: ingress.yml

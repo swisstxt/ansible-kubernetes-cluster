@@ -10,7 +10,7 @@
     - hosts/group_vars/all/secret.yml
     - hosts/group_vars/all/version.yml
     - "{{ vars_file_path }}"
-  tasks:                                                                    # Here the section for the tasks begins
+  tasks:                                                                    # Here the section for the tasks to begin
 
   - name: Create Example Namespace                                          # Create a new namespace for the new deployment
     kubernetes.core.k8s:
