@@ -78,8 +78,8 @@
           - host:                                                           # Can also be a DNS name
             http:
               paths:
-              - path: /                                                     # Path to connect to in the Browser.
-                pathType: Prefix                                            # Must match the path
+              - path: /example-application                                  # Path to connect to in the Browser.
+                pathType: Exact                                             # Must match the path
                 backend:
                   service:
                     name: example-service                                   # Connect to the corresponding service
