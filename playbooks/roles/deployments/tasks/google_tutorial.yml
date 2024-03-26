@@ -1,1 +1,105 @@
 ---
+# This Playbook uses the kubeconfig in the ~/.kube/config file to connect to the cluster
+# This kubeconfig file can be obtained by copying the file from the kubernetes_user's .kube folder to the localhost
+- name: Example Deployment of simple Webserver
+  hosts: localhost
+  gather_facts: no
+  collections:
+    - kubernetes.core.k8s
+  vars_files:                                                               # The vars Files it should use
+    - hosts/group_vars/all/secret.yml
+    - hosts/group_vars/all/version.yml
+    - "{{ vars_file_path }}"
+  tasks:  
+
+  - name: Create Tutorial Namespace                                          # Create a new namespace for the new deployment
+    kubernetes.core.k8s:
+      name: tutorial
+      api_version: v1
+      kind: Namespace
+      state: present
+
+  - name: Create Deployment
+    kubernetes.core.k8s:
+      state: present
+      definition:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: hello-deployment
+          namespace: tutorial
+        spec:
+          selector:
+            matchLabels:
+              greeting: hello
+          replicas: 3
+          template:
+            metadata:
+              labels:
+                greeting: hello
+            spec:
+              containers:
+              - name: hello-world
+                image: "gcr.io/google-samples/hello-app:2.0"
+                env:
+                - name: "PORT"
+                  value: "50000"
+              - name: hello-kubernetes
+                image: "gcr.io/google-samples/node-hello:1.0"
+                env:
+                - name: "PORT"
+                  value: "8080"
+
+  - name: Create Service
+    kubernetes.core.k8s:
+      state: present
+      definition:
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: hello-service
+          namespace: tutorial
+        spec:
+          type: ClusterIP
+          selector:
+            greeting: hello
+          ports:
+          - name: world-port
+            protocol: TCP
+            port: 60000
+            targetPort: 50000
+          - name: kubernetes-port
+            protocol: TCP
+            port: 60001
+            targetPort: 8080
+  
+  - name: Create Ingress
+    kubernetes.core.k8s:
+      state: present
+      definition:
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: my-ingress
+          namespace: tutorial
+          annotations:                                                      # Special attributes for the ingress to consider, in this case only expose for SRG
+            nginx.ingress.kubernetes.io/whitelist-source-range: 0.0.0.0/0
+        spec:
+          ingressClassName: nginx
+          rules:
+          - http:
+              paths:
+              - path: /greet-the-world
+                pathType: Exact
+                backend:
+                  service:
+                    name: hello-service
+                    port:
+                      number: 60000
+              - path: /greet-kubernetes
+                pathType: Exact
+                backend:
+                  service:
+                    name: hello-service
+                    port:
+                      number: 60001
