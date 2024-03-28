@@ -4,6 +4,7 @@ master ansible_host="{{ natip }}" ansible_port="{{ master_port }}" ansible_user=
 [workers]
 worker1 ansible_host="{{ natip }}" ansible_port="{{ worker1_port }}" ansible_user=root
 worker2 ansible_host="{{ natip }}" ansible_port="{{ worker2_port }}" ansible_user=root
+worker3 ansible_host="{{ natip }}" ansible_port="{{ worker3_port }}" ansible_user=root
 
 [nodes:children]
 masters
