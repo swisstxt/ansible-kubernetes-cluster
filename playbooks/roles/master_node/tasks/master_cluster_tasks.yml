@@ -64,7 +64,6 @@
 - name: Get Join Command                                                                                            # Print out the join command for the workers
   ansible.builtin.shell: sudo kubeadm token create --print-join-command
   register: cluster_join_command                                                                                    # Register the join command
-  when: cluster_info_stat.rc != 0                                                                                   # Only do this step if the cluster was newly created
 
 - name: Show Join Command as Information for the User                                                               # Task to show the actual join command to the user
   ansible.builtin.debug:

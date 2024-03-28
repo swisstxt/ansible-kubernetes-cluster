@@ -8,6 +8,17 @@
   ansible.builtin.shell: "{{ cluster_joincommand }}"            # Use the join_command variable
   when: not kubelet_stat.stat.exists                            # Only on nodes with no kubelet.conf
 
+- name: Check if Node already Joined a Cluster                  # Task to check if .kube exists
+  ansible.builtin.stat:
+    path: "/home/{{ kubernetes_user }}/.kube"
+  register: kubeconfig_stat    
+
+- name: Create .kube Directory                                  # Create .kube Folder if not exists
+  ansible.builtin.file:
+    path: "/home/{{ kubernetes_user }}/.kube"
+    state: directory
+  when: not kubeconfig_stat.stat.exists
+
 - name: Copy .kubeconfig to Worker Nodes                        # Copy .kubecofig for the {{ kubernetes_user }}
   ansible.builtin.copy:
     src: admin.conf
