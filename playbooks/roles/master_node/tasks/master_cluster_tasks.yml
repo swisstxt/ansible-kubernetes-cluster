@@ -34,6 +34,15 @@
     group: "{{ kubernetes_user }}"
   when: not kube_config_stat.stat.exists                                                                            # Only do it when the previous task hasen't been successfull
 
+- name: Copy Config to Localhost                                                                                    # Copy the .kubeconfig to localhost
+  become: yes
+  become_user: root
+  ansible.builtin.fetch:
+    remote_src: true
+    src: "/etc/kubernetes/admin.conf"
+    dest: "{{ playbook_dir }}/roles/worker_node/files/admin.conf"
+    flat: yes
+
 - name: Check if flannel.yml exists                                                                                 # See if flannel already has been downloaded
   ansible.builtin.stat:
     path: "/etc/kubernetes/flannel-{{ v_flannel }}.yml"

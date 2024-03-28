@@ -7,3 +7,8 @@
 - name: Join the Cluster using the Join Command                 # Task to join the cluster using the previously set variable
   ansible.builtin.shell: "{{ cluster_joincommand }}"            # Use the join_command variable
   when: not kubelet_stat.stat.exists                            # Only on nodes with no kubelet.conf
+
+- name: Copy .kubeconfig to Worker Nodes                        # Copy .kubecofig for the {{ kubernetes_user }}
+  ansible.builtin.copy:
+    src: admin.conf
+    dest: "/home/{{ kubernetes_user }}/.kube/config"
