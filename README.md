@@ -144,8 +144,13 @@ v_flannel: 0.24.3
 ```
 
 ## Deploy Example Deployment
+To Run these Playbooks, you need kubectl installed on your local machine and have a functioning config.
 
 To Deploy the Example Application, execute the following command:
 ```ruby
 ansible-playbook playbooks/roles/deployments/tasks/example_deployment.yml
+```
+There is also a second Application in the deployments folder. It's a based on the Google Cloud Tutorial (https://cloud.google.com/anthos/clusters/docs/bare-metal/latest/how-to/create-service-ingress):
+```ruby
+ansible-playbook playbooks/roles/deployments/tasks/google_tutorial.yml
 ```
