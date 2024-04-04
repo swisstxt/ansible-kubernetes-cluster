@@ -11,7 +11,7 @@
 - name: Check if Node already Joined a Cluster                  # Task to check if .kube exists
   ansible.builtin.stat:
     path: "/home/{{ kubernetes_user }}/.kube"
-  register: kubeconfig_stat    
+  register: kubeconfig_stat                                     # Register variable to check if the next task needs to be executed
 
 - name: Create .kube Directory                                  # Create .kube Folder if not exists
   ansible.builtin.file:
