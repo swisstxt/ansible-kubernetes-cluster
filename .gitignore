@@ -1,1 +1,2 @@
 hosts/group_vars/all/secret.yml
+playbooks/roles/worker_node/files/admin.conf
